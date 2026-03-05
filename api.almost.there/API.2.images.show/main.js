@@ -2,10 +2,27 @@ window.addEventListener("load", async function (e) {
   const target = document.querySelector("#result");
   const input = document.querySelector("#search");
   const form = document.querySelector("#search-form");
-  async function fetchResults(query = "china") {
-    const URL = `https://api.vam.ac.uk/v2/objects/search?q=${encodeURIComponent(
-      query
-    )}`;
+
+
+ 
+    form.addEventListener("submit", function (evt) {
+      evt.preventDefault();
+      const q =  input.value.trim();
+
+
+
+      //check if there something in the querry
+
+
+    fetchResults(q);
+
+    });
+  
+
+
+  async function fetchResults(query ) {
+    clearResults();
+    const URL = `https://api.vam.ac.uk/v2/objects/search?q=${encodeURIComponent(query)}&data_profile=full`;
     try {
       const response = await fetch(URL);
       if (!response.ok) {
@@ -15,61 +32,64 @@ window.addEventListener("load", async function (e) {
       }
       const data = await response.json();
       const records = data.records || [];
+      // shows the records of what you are searching for in the console. Use it to understand the record better.
+      console.log(records);
       if (records.length === 0) {
         target.textContent = "No results";
       } else {
+       
+    
 
 
-        const parent = document.createElement("div");
+     //maker,title, date, iamge, description should be added 
 
-        const resultHTML = records.map((record) => {
-          const container = document.createElement("div");
-          container.className = "result-item";
+      records.forEach(record => {
 
-          const h2 = document.createElement("h2");
-          h2.textContent = record.title || "Untitled";
-          parent.appendChild(h2);
+        const container = document.createElement("div");
 
-          const imageUrl = document.createElement("img");
-          imageUrl.src = record.images && record.images.length > 0 ? record.images[0].url : null;
-          imageUrl.alt = record.title || "Untitled";
-          parent.appendChild(imageUrl);
+        const image = document.createElement("img");
+        //https://framemark.vam.ac.uk/collections/{imageidentifier}/full/full/0/default.jpg
+        //create guard if image does not exist
+        image.src = record._ || "No image";
+        console.log(image.src);
+        container.appendChild(image);
 
-          const maker = document.createElement("p");
-          maker.textContent = `Maker: ${record.maker || "no id"}`;
-          parent.appendChild(maker);
+        const title = document.createElement("h2");
+        title.textContent = record._primaryTitle || "No title";
+        container.appendChild(title);
 
-          const date = document.createElement("p");
-          date.textContent = `Date: ${record.date || "no date"}`;
-          parent.appendChild(date);
+        const maker = document.createElement("p");
+        //maker.textContent = record.maker || "No maker";
+        container.appendChild(maker);
 
-          const description = document.createElement("p");
-          description.textContent = `Description: ${
-            record.description || "No description available."
-          }`;
-          parent.appendChild(description);
-          console.log(record);
-        });
+        const date = document.createElement("p");
+        date.textContent = record._primaryDate || "No date";
+        container.appendChild(date);
+
+        
+
+        const description = document.createElement("p");
+        description.textContent = record.briefDescription || "No description";
+        container.appendChild(description);
+
+        target.appendChild(container);
+
+      });
+
+
+
 
       }
     } catch (error) {
       console.log(error);
     }
+    
   }
-
-  if (form) {
-    form.addEventListener("submit", function (evt) {
-      evt.preventDefault();
-      const q = input && input.value.trim() ? input.value.trim() : "china";
-      fetchResults(q);
-    });
-  } else if (input) {
-    input.addEventListener("keydown", function (evt) {
-      if (evt.key === "Enter") {
-        evt.preventDefault();
-        const q = input.value.trim() || "china";
-        fetchResults(q);
+    function clearResults() {
+if (typeof target.replaceChildren === "function") {
+        target.replaceChildren();
+        return;
       }
-    });
-  }
+}
+
 });
